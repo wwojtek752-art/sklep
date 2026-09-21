@@ -33,10 +33,74 @@
       (inline ? "" : "<span>Zdjęcie wkrótce</span>");
     return box;
   };
-  // Zdjęcie produktu; gdy pole image jest puste albo plik się nie wczyta, pokazujemy ikonę prezentu
+  /* ------------------------------------------------------------
+     Animowana paczka niespodzianka (pz-): ikona SVG + pajęczyny w rogach karty.
+     Jeden "komponent" z parametrem rozmiaru: small = 3, medium = 4, large = 6 słodyczy.
+     Animacja jest w styles.css (sekcja "pz-"), tu tylko budujemy znaczniki.
+     ------------------------------------------------------------ */
+  const PZ_INK = "#1e1033";
+  const PZ_OUT = `stroke="${PZ_INK}" stroke-width="2" stroke-linejoin="round"`; // kontur słodyczy pasuje do konturów kart
+  const PZ_CANDY = {
+    lolli: `<line x1="0" y1="10" x2="0" y2="46" stroke="#5b2a91" stroke-width="4" stroke-linecap="round"/><circle cx="0" cy="-2" r="15" fill="#ff5fa2" ${PZ_OUT}/><path d="M0 -2 m0 -3 a3 3 0 1 1 -3 3 a7 7 0 1 1 7 7 a11 11 0 1 1 -11 -11" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>`,
+    star: `<path d="M0,-15 L3.9,-5.3 L14.3,-4.6 L6.3,2 L8.8,12.1 L0,6.6 L-8.8,12.1 L-6.3,2 L-14.3,-4.6 L-3.9,-5.3z" fill="#ffd84d" ${PZ_OUT}/>`,
+    wrap: `<path d="M-11 0 l-13 -9 v18z" fill="#ffd84d" ${PZ_OUT}/><path d="M11 0 l13 -9 v18z" fill="#ffd84d" ${PZ_OUT}/><ellipse cx="0" cy="0" rx="15" ry="10" fill="#8a5bd6" ${PZ_OUT}/><path d="M-8 -6 l6 12 M2 -7 l6 12" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>`,
+    ball: `<circle cx="0" cy="0" r="13" fill="#4fc3f7" ${PZ_OUT}/><path d="M-9 -9 q10 9 0 18 M2 -12.5 q10 12.5 0 25" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>`,
+    corn: `<path d="M0 -17 L-4.5 -5 H4.5z" fill="#fff" ${PZ_OUT}/><path d="M-4.5 -5 H4.5 L8.5 5 H-8.5z" fill="#ff8a1f" ${PZ_OUT}/><path d="M-8.5 5 H8.5 L12 14 Q0 18 -12 14z" fill="#ffd84d" ${PZ_OUT}/>`,
+    heart: `<path d="M0 12 C-19 0 -14 -15 0 -6 C14 -15 19 0 0 12z" fill="#ff4d5e" ${PZ_OUT}/>`,
+  };
+  // [rodzaj, x, dx, dy, obrót, skala, opóźnienie wyskoku, opóźnienie bujania, czas bujania]
+  const PZ_SIZES = {
+    small:  { px: 150, candies: [["lolli", 74, -26, -72, -14, 1, .12, .7, 1.3], ["star", 100, 0, -100, 20, 1.12, .06, .6, 1.2], ["wrap", 124, 28, -80, 12, 1, .2, .9, 1.5]] },
+    medium: { px: 170, candies: [["lolli", 68, -34, -68, -16, 1, .12, .7, 1.3], ["star", 90, -14, -102, 18, 1.1, .05, .6, 1.2], ["wrap", 112, 12, -96, 10, 1, .2, .9, 1.5], ["ball", 136, 30, -70, -10, 1, .28, .8, 1.4]] },
+    large:  { px: 190, candies: [["lolli", 62, -40, -64, -16, 1, .12, .7, 1.3], ["corn", 78, -30, -96, -12, 1, .06, .6, 1.2], ["star", 94, -16, -116, 18, 1.1, .02, .8, 1.4], ["wrap", 110, 8, -110, 10, 1, .16, .9, 1.5], ["heart", 124, 28, -90, 14, 1, .24, .65, 1.25], ["ball", 138, 40, -62, -10, 1, .3, .85, 1.35]] },
+  };
+  const pzSpark = (x, y, s, color, delay) => `<g class="pz-spark" style="--sd:${delay}s"><path d="M${x} ${y} l${s} ${s * 2.7} ${s * 2.7} ${s} -${s * 2.7} ${s} -${s} ${s * 2.7} -${s} -${s * 2.7} -${s * 2.7} -${s} ${s * 2.7} -${s}z" fill="${color}"/></g>`;
+
+  const pzIcon = (size) => {
+    const cfg = PZ_SIZES[size] || PZ_SIZES.medium;
+    const candies = cfg.candies.map(([kind, x, dx, dy, r, s, d, bd, bt]) =>
+      `<g transform="translate(${x} 120)"><g class="pz-c" style="--dx:${dx}px;--dy:${dy}px;--r:${r}deg;--s:${s};--d:${d}s"><g class="pz-bob" style="--bd:${bd}s;--bt:${bt}s">${PZ_CANDY[kind]}</g></g></g>`).join("");
+    return `<svg class="pz-ico" viewBox="0 0 200 200" style="--pz-w:${cfg.px}px" aria-hidden="true" focusable="false">` +
+      `<ellipse cx="100" cy="184" rx="58" ry="7" fill="${PZ_INK}" opacity=".28"/>` +
+      pzSpark(28, 62, 3, "#ffd84d", 0) + pzSpark(168, 48, 3, "#ff5fa2", .25) +
+      pzSpark(174, 110, 2, "#5b2a91", .5) + pzSpark(20, 118, 2, "#ff9a3c", .75) +
+      candies +
+      `<g class="pz-box"><rect x="45" y="100" width="110" height="78" rx="9" fill="#5b2a91"/><rect x="45" y="160" width="110" height="18" rx="9" fill="#000" opacity=".16"/>` +
+      `<path d="M76 121 l8 -1 -6 12z M124 121 l-8 -1 6 12z" fill="#ff9a3c"/><path d="M78 143 q22 16 44 0" fill="none" stroke="#ff9a3c" stroke-width="4.5" stroke-linecap="round"/></g>` +
+      `<g class="pz-lid"><rect x="38" y="80" width="124" height="28" rx="9" fill="${PZ_INK}"/><rect x="92" y="80" width="16" height="28" fill="#ff9a3c"/>` +
+      `<ellipse cx="86" cy="72" rx="15" ry="9" transform="rotate(-20 86 72)" fill="#ff9a3c"/><ellipse cx="114" cy="72" rx="15" ry="9" transform="rotate(20 114 72)" fill="#ff9a3c"/>` +
+      `<circle cx="100" cy="76" r="6.5" fill="#e07f14" stroke="${PZ_INK}" stroke-width="2"/></g></svg>`;
+  };
+
+  // Pajęczyna wychodząca z rogu (fx/fy: 0 = lewy/górny róg, 1 = prawy/dolny). Ten sam wzór, tylko odbity.
+  const pzWebPath = (fx, fy) => {
+    const X = (x) => +(fx ? 100 - x : x).toFixed(1), Y = (y) => +(fy ? 100 - y : y).toFixed(1);
+    const at = (r, a) => `${X(r * Math.cos(a))} ${Y(r * Math.sin(a))}`;
+    let d = "";
+    for (let k = 0; k <= 4; k++) d += `M${X(0)} ${Y(0)}L${at(96, (k * Math.PI) / 8)}`;
+    for (const r of [24, 44, 64, 84]) {
+      for (let k = 0; k < 4; k++) {
+        const a = (k * Math.PI) / 8;
+        d += `M${at(r, a)}Q${at(r * 0.8, a + Math.PI / 16)} ${at(r, a + Math.PI / 8)}`;
+      }
+    }
+    return d;
+  };
+  const pzWebs = () => [["tl", 0, 0], ["tr", 1, 0], ["bl", 0, 1], ["br", 1, 1]].map(([pos, fx, fy]) =>
+    `<svg class="pz-web pz-${pos}" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><path d="${pzWebPath(fx, fy)}" pathLength="1" fill="none" stroke="${PZ_INK}" stroke-width="1.4" stroke-linecap="round"/></svg>`).join("");
+
+  // Zamiast zdjęcia: scena z animowaną paczką (gdy w products.js brak pola image)
+  const pzStage = (p) => {
+    const stage = el("div", { class: "pz-stage", role: "img", "aria-label": `Paczka niespodzianka: ${p.name}` });
+    stage.innerHTML = pzIcon(p.size) +
+      '<span class="pz-hint" aria-hidden="true"><span class="pz-h-hover">Najedź, aby otworzyć</span><span class="pz-h-touch">Dotknij, aby otworzyć</span></span>';
+    return stage;
+  };
+
+  // Zdjęcie produktu; gdy pole image jest puste pokazujemy animowaną paczkę, a gdy plik się nie wczyta – ikonę prezentu
   const productMedia = (p, inline = false) => {
     const fallback = () => placeholder(p.size, `Zdjęcie wkrótce: ${p.name}`, inline);
-    if (!p.image) return fallback();
+    if (!p.image) return inline ? fallback() : pzStage(p);
     const img = el("img", { src: p.image, alt: inline ? "" : p.name, loading: "lazy", width: "400", height: "300" });
     const node = inline ? el("div", { class: "thumb" }, img) : img;
     img.addEventListener("error", () => node.replaceWith(fallback()), { once: true });
@@ -205,17 +269,27 @@
   const grid = $("#grid");
 
   const renderProducts = () => {
-    grid.replaceChildren(...PRODUCTS.map((p) =>
-      el("li", {},
-        el("article", { class: "card" },
-          productMedia(p),
-          el("div", { class: "card-body" },
-            el("h3", { text: p.name }),
-            el("p", { class: "card-desc", text: p.description }),
-            el("div", { class: "card-foot" },
-              el("span", { class: "price", text: fmt(toCents(p.price)) }),
-              el("button", { class: "btn", type: "button", "aria-label": `Dodaj do koszyka: ${p.name}`, text: "Do koszyka", onclick: () => addToCart(p.id) })))))));
+    grid.replaceChildren(...PRODUCTS.map((p) => {
+      const card = el("article", { class: p.image ? "card" : "card pz-card" },
+        productMedia(p),
+        el("div", { class: "card-body" },
+          el("h3", { text: p.name }),
+          el("p", { class: "card-desc", text: p.description }),
+          el("div", { class: "card-foot" },
+            el("span", { class: "price", text: fmt(toCents(p.price)) }),
+            el("button", { class: "btn", type: "button", "aria-label": `Dodaj do koszyka: ${p.name}`, text: "Do koszyka", onclick: () => addToCart(p.id) }))));
+      if (!p.image) card.insertAdjacentHTML("afterbegin", pzWebs()); // pajęczyny w rogach karty z animowaną paczką
+      return el("li", {}, card);
+    }));
   };
+
+  // Telefony (brak hovera): dotknięcie karty z paczką włącza/wyłącza animację (klasa pz-open)
+  if (matchMedia("(hover: none)").matches) {
+    grid.addEventListener("click", (e) => {
+      const card = e.target.closest(".pz-card");
+      if (card && !e.target.closest("button")) card.classList.toggle("pz-open");
+    });
+  }
 
   // zdjęcia zastępcze w sekcjach "Opakowanie" i "Co jest w środku" (podmienisz je na <img> w index.html)
   $("#media-opakowanie").replaceChildren(placeholder("large"));

@@ -360,6 +360,72 @@ p { margin: 0 0 .9em; }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
 /* ============================================================
+   pz-: animacja paczek niespodzianek (czysty CSS + SVG)
+   Karta "otwiera się" po najechaniu myszką (:hover), dotknięciu na telefonie (.pz-open)
+   albo przy zaznaczeniu klawiaturą (:has(:focus-visible)). Po zjechaniu wszystko wraca płynnie.
+   ============================================================ */
+.pz-card { position: relative; }               /* pajęczyny są w rogach karty; overflow: hidden ma już .card */
+.pz-card .card-body { position: relative; z-index: 2; }
+
+.pz-stage {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px;
+  min-height: 268px; padding: 34px 12px 14px;
+  background: #ffd9a8; border-bottom: 2px solid var(--ink);
+}
+.pz-ico { position: relative; z-index: 2; display: block; width: var(--pz-w, 170px); max-width: 100%; height: auto; overflow: visible; }
+.pz-hint { position: relative; z-index: 2; font-size: .875rem; font-weight: 700; color: var(--violet); }
+.pz-h-touch { display: none; }
+@media (hover: none) { .pz-h-hover { display: none; } .pz-h-touch { display: inline; } }
+
+.pz-c, .pz-lid, .pz-box, .pz-bob, .pz-spark { transform-box: fill-box; }
+.pz-c { transition: transform .6s cubic-bezier(.34, 1.56, .64, 1); }
+.pz-lid { transform-origin: 0% 100%; transition: transform .55s cubic-bezier(.34, 1.56, .64, 1); }
+.pz-box { transform-origin: 50% 100%; }
+.pz-bob { transform-origin: 50% 50%; }
+.pz-spark { opacity: 0; transform-origin: 50% 50%; }
+
+.pz-web {
+  position: absolute; z-index: 1; pointer-events: none; opacity: 0;
+  transition: transform .7s cubic-bezier(.34, 1.3, .64, 1), opacity .3s;
+}
+.pz-web path { stroke-dasharray: 1; stroke-dashoffset: 1; opacity: .45; transition: stroke-dashoffset .9s ease-out .1s; }
+.pz-tl, .pz-tr { top: 0; width: 72px; height: 72px; }
+.pz-bl, .pz-br { bottom: 0; width: 44px; height: 44px; }
+.pz-tl { left: 0; transform-origin: 0 0; transform: scale(.15) rotate(-14deg); }
+.pz-tr { right: 0; transform-origin: 100% 0; transform: scale(.15) rotate(14deg); }
+.pz-bl { left: 0; transform-origin: 0 100%; transform: scale(.15) rotate(14deg); }
+.pz-br { right: 0; transform-origin: 100% 100%; transform: scale(.15) rotate(-14deg); }
+
+@keyframes pz-wob { 0% { transform: rotate(0) scaleY(1); } 20% { transform: rotate(-3deg) scaleY(.96); } 45% { transform: rotate(3deg) scaleY(1.03); } 70% { transform: rotate(-1.5deg); } 100% { transform: rotate(0) scaleY(1); } }
+@keyframes pz-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes pz-twinkle { 0%, 100% { opacity: 0; transform: scale(.3) rotate(0); } 50% { opacity: 1; transform: scale(1.1) rotate(25deg); } }
+
+/* stan "otwarty": dotyk (.pz-open) i klawiatura */
+.pz-card:is(.pz-open, :has(:focus-visible)) .pz-web { opacity: 1; transform: none; }
+.pz-card:is(.pz-open, :has(:focus-visible)) .pz-web path { stroke-dashoffset: 0; }
+.pz-card:is(.pz-open, :has(:focus-visible)) .pz-lid { transform: translate(-34px, -46px) rotate(-28deg); }
+.pz-card:is(.pz-open, :has(:focus-visible)) .pz-c { transition-delay: var(--d); transform: translate(var(--dx), var(--dy)) rotate(var(--r)) scale(var(--s)); }
+.pz-card:is(.pz-open, :has(:focus-visible)) .pz-box { animation: pz-wob .5s ease-out; }
+.pz-card:is(.pz-open, :has(:focus-visible)) .pz-bob { animation: pz-bob var(--bt) ease-in-out var(--bd) infinite; }
+.pz-card:is(.pz-open, :has(:focus-visible)) .pz-spark { animation: pz-twinkle 1.1s ease-in-out var(--sd) infinite; }
+
+/* ten sam stan po najechaniu myszką (tylko tam, gdzie hover naprawdę istnieje, żeby na telefonie nie "przyklejał się") */
+@media (hover: hover) {
+  .pz-card:hover .pz-web { opacity: 1; transform: none; }
+  .pz-card:hover .pz-web path { stroke-dashoffset: 0; }
+  .pz-card:hover .pz-lid { transform: translate(-34px, -46px) rotate(-28deg); }
+  .pz-card:hover .pz-c { transition-delay: var(--d); transform: translate(var(--dx), var(--dy)) rotate(var(--r)) scale(var(--s)); }
+  .pz-card:hover .pz-box { animation: pz-wob .5s ease-out; }
+  .pz-card:hover .pz-bob { animation: pz-bob var(--bt) ease-in-out var(--bd) infinite; }
+  .pz-card:hover .pz-spark { animation: pz-twinkle 1.1s ease-in-out var(--sd) infinite; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pz-c, .pz-lid, .pz-web, .pz-web path { transition: none; }
+  .pz-card :is(.pz-box, .pz-bob, .pz-spark) { animation: none !important; }
+}
+/* ============================================================
    Większy ekran: tylko rozszerzenia względem telefonu
    ============================================================ */
 @media (min-width: 520px) {
