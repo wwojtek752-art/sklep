@@ -23,19 +23,30 @@
     return node;
   };
 
-  const FALLBACK_IMG = "img/placeholder.svg";
-  const productImg = (p, attrs = {}) => {
-    const img = el("img", { src: p.image || FALLBACK_IMG, alt: attrs.alt ?? "", loading: "lazy", ...attrs });
-    img.addEventListener("error", () => {
-      if (!img.dataset.fallback) { img.dataset.fallback = "1"; img.src = FALLBACK_IMG; }
-    });
-    return img;
+  // Zastępcze "zdjęcie": ikona prezentu (small/medium/large) z podpisem
+  const GIFT_PX = { small: 56, medium: 84, large: 120 };
+  const placeholder = (size, label = "Zdjęcie wkrótce", inline = false) => {
+    const key = size in GIFT_PX ? size : "medium";
+    const px = inline ? 36 : GIFT_PX[key];
+    const box = el("div", { class: inline ? "thumb" : `ph ph--${key}`, role: "img", "aria-label": label });
+    box.innerHTML = `<svg width="${px}" height="${px}" viewBox="0 0 64 64" aria-hidden="true"><use href="#gift"/></svg>` +
+      (inline ? "" : "<span>Zdjęcie wkrótce</span>");
+    return box;
+  };
+  // Zdjęcie produktu; gdy pole image jest puste albo plik się nie wczyta, pokazujemy ikonę prezentu
+  const productMedia = (p, inline = false) => {
+    const fallback = () => placeholder(p.size, `Zdjęcie wkrótce: ${p.name}`, inline);
+    if (!p.image) return fallback();
+    const img = el("img", { src: p.image, alt: inline ? "" : p.name, loading: "lazy", width: "400", height: "300" });
+    const node = inline ? el("div", { class: "thumb" }, img) : img;
+    img.addEventListener("error", () => node.replaceWith(fallback()), { once: true });
+    return node;
   };
 
   /* ============================================================
      Dane sklepu (z products.js)
      ============================================================ */
-  document.title = `${SHOP.name} – Halloweenowy sklep`;
+  document.title = `${SHOP.name} – Paczki niespodzianki dla dzieci`;
   document.querySelectorAll("[data-shop-name]").forEach((n) => (n.textContent = SHOP.name));
   document.querySelector("[data-shop-label]").setAttribute("aria-label", `${SHOP.name} – strona główna`);
   document.querySelectorAll("[data-free-from]").forEach((n) => (n.textContent = fmt(toCents(SHOP.freeShippingFrom)).replace(",00", "")));
@@ -118,7 +129,7 @@
     itemsBox.replaceChildren();
     if (!cart.length) {
       itemsBox.append(el("div", { class: "empty" },
-        el("p", { text: "Twój koszyk jest pusty. Coś strasznie dobrego czeka na półkach!" })));
+        el("p", { text: "Twój koszyk jest pusty. Wybierz paczkę z oferty." })));
       foot.hidden = true;
       return;
     }
@@ -127,7 +138,7 @@
     for (const { id, qty } of cart) {
       const p = byId.get(id);
       itemsBox.append(el("div", { class: "line" },
-        productImg(p, { alt: "", width: "64", height: "64" }),
+        productMedia(p, true),
         el("div", {},
           el("h3", { text: p.name }),
           el("p", { class: "line-unit", text: `${fmt(toCents(p.price))} / szt.` })),
@@ -189,50 +200,76 @@
   });
 
   /* ============================================================
-     Produkty i filtr kategorii
+     Produkty (bez filtrów – zawsze pokazujemy wszystkie paczki z products.js)
      ============================================================ */
   const grid = $("#grid");
-  const filtersBox = $("#filters");
-  const countEl = $("#count");
-  const ALL = "Wszystkie";
-  let activeCat = ALL;
-
-  const plural = (n) => (n === 1 ? "produkt" : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? "produkty" : "produktów");
 
   const renderProducts = () => {
-    const list = activeCat === ALL ? PRODUCTS : PRODUCTS.filter((p) => p.category === activeCat);
-    grid.replaceChildren(...list.map((p) =>
+    grid.replaceChildren(...PRODUCTS.map((p) =>
       el("li", {},
         el("article", { class: "card" },
-          productImg(p, { alt: p.name, width: "400", height: "300" }),
+          productMedia(p),
           el("div", { class: "card-body" },
-            el("p", { class: "tag", text: p.category }),
             el("h3", { text: p.name }),
             el("p", { class: "card-desc", text: p.description }),
             el("div", { class: "card-foot" },
               el("span", { class: "price", text: fmt(toCents(p.price)) }),
               el("button", { class: "btn", type: "button", "aria-label": `Dodaj do koszyka: ${p.name}`, text: "Do koszyka", onclick: () => addToCart(p.id) })))))));
-    countEl.textContent = `${list.length} ${plural(list.length)}`;
   };
 
-  const renderFilters = () => {
-    const cats = [ALL, ...new Set(PRODUCTS.map((p) => p.category))];
-    filtersBox.replaceChildren(...cats.map((c) =>
-      el("button", {
-        class: "chip", type: "button", "aria-pressed": String(c === activeCat), text: c,
-        onclick: () => {
-          activeCat = c;
-          renderFilters();
-          renderProducts();
-          // przyciski zostały odtworzone – oddajemy fokus wybranemu filtrowi
-          filtersBox.querySelector('[aria-pressed="true"]').focus();
-        },
-      })));
-  };
+  // zdjęcia zastępcze w sekcjach "Opakowanie" i "Co jest w środku" (podmienisz je na <img> w index.html)
+  $("#media-opakowanie").replaceChildren(placeholder("large"));
+  $("#media-zawartosc").replaceChildren(placeholder("medium"));
 
-  renderFilters();
   renderProducts();
   renderCart();
+
+  /* ============================================================
+     Menu w nagłówku (telefon: hamburger, komputer: rząd linków)
+     ============================================================ */
+  const menuBtn = $("#menu-btn");
+  const nav = $("#nav");
+  const setMenu = (open) => {
+    nav.classList.toggle("open", open);
+    menuBtn.setAttribute("aria-expanded", String(open));
+    menuBtn.setAttribute("aria-label", open ? "Zamknij menu" : "Otwórz menu");
+  };
+  const closeMenu = () => setMenu(false);
+  menuBtn.addEventListener("click", () => setMenu(!nav.classList.contains("open")));
+  // Płynne przewijanie do sekcji (kotwice): zatrzymujemy się pod przyklejonym nagłówkiem.
+  // Robimy to w JS, bo GSAP potrafi nadpisać CSS-owe scroll-behavior.
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest('a[href^="#"]');
+    if (!a) return;
+    const target = a.getAttribute("href").length > 1 && document.querySelector(a.getAttribute("href"));
+    if (a.closest("#nav")) closeMenu();
+    if (!target || a.classList.contains("skip-link")) return;
+    e.preventDefault();
+    const top = target.getBoundingClientRect().top + scrollY - (document.querySelector("#header").offsetHeight + 8);
+    scrollTo({ top: Math.max(0, top), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    history.replaceState(null, "", a.getAttribute("href"));
+  });
+  document.addEventListener("click", (e) => {
+    if (nav.classList.contains("open") && !e.target.closest("#nav, #menu-btn")) closeMenu();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && nav.classList.contains("open")) { closeMenu(); menuBtn.focus(); }
+  });
+
+  /* ============================================================
+     Formularz kontaktowy (na razie tylko wygląd, bez wysyłki)
+     ============================================================ */
+  const form = $("#contact-form");
+  const formMsg = $("#form-msg");
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (!form.checkValidity()) {
+      formMsg.textContent = "Uzupełnij wszystkie pola i podaj poprawny adres e-mail.";
+      form.querySelector(":invalid")?.focus();
+      return;
+    }
+    formMsg.textContent = "Formularz jest jeszcze w przygotowaniu. Napisz do nas na adres e-mail powyżej.";
+  });
 
   /* ============================================================
      Sceny 1 i 2: gwiazdy + animacja zaglądania do dyni (GSAP)
@@ -507,6 +544,7 @@
         dirty = true;
         const t = tl.time();
         header.classList.toggle("on-shop", t > 8.6);
+        if (t <= 8.6) closeMenu();
         finished = t >= T_FILL_END;
         scene.classList.toggle("done", finished);
       },
