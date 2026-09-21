@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>[NAZWA] – Halloweenowy sklep</title>
+  <meta name="description" content="Halloweenowy sklep internetowy: dekoracje, kostiumy, słodycze i świece na najstraszniejszą noc w roku.">
+  <meta name="theme-color" content="#120a2b">
+  <script>
+    // Przy ograniczonym ruchu od razu pokazujemy sklep, bez animacji zaglądania.
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) document.documentElement.classList.add("no-intro");
+  </script>
+  <link rel="stylesheet" href="styles.css">
+  <noscript><style>#intro{display:none}.site-header{color:#1e1033}</style></noscript>
+</head>
+<body>
+  <a class="skip-link" href="#sklep">Przejdź do sklepu</a>
+
+  <!-- Ozdoby SVG używane w wielu miejscach (rysowane raz, wstawiane przez <use>) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="web" viewBox="0 0 100 100">
+        <g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
+          <path d="M0 0L100 0M0 0L92.4 38.3M0 0L70.7 70.7M0 0L38.3 92.4M0 0L0 100"/>
+          <path d="M35 0Q29.2 5.8 32.3 13.4Q24.7 16.5 24.7 24.7Q16.5 24.7 13.4 32.3Q5.8 29.2 0 35"/>
+          <path d="M60 0Q50 10 55.4 23Q42.4 28.3 42.4 42.4Q28.3 42.4 23 55.4Q10 50 0 60"/>
+          <path d="M85 0Q70.9 14.1 78.5 32.5Q60.1 40.1 60.1 60.1Q40.1 60.1 32.5 78.5Q14.1 70.9 0 85"/>
+        </g>
+      </symbol>
+      <symbol id="bat" viewBox="0 0 64 32">
+        <path fill="currentColor" d="M32 8C30 4 28 3 27 2L27 8C22 6 14 6 2 12C8 12 12 14 14 18C18 15 22 16 24 20C27 18 29 19 32 26C35 19 37 18 40 20C42 16 46 15 50 18C52 14 56 12 62 12C50 6 42 6 37 8L37 2C36 3 34 4 32 8Z"/>
+      </symbol>
+      <symbol id="mini-pumpkin" viewBox="0 0 60 56">
+        <g fill="currentColor">
+          <ellipse cx="18" cy="33" rx="14" ry="20"/>
+          <ellipse cx="42" cy="33" rx="14" ry="20"/>
+          <ellipse cx="30" cy="33" rx="14" ry="22"/>
+          <path d="M28 13C28 7 30 4 34 2L36 6C33 7 33 9 33 13Z"/>
+        </g>
+        <g fill="var(--pumpkin)">
+          <path d="M20 30l5-7 4 7zM31 30l4-7 5 7z"/>
+          <path d="M20 39q10 9 20 0l-3 6-4-3-3 4-3-4-4 3z"/>
+        </g>
+      </symbol>
+    </defs>
+  </svg>
+
+  <header class="site-header" id="header">
+    <a class="logo" href="#top" aria-label="[NAZWA] – strona główna" data-shop-label>
+      <svg class="logo-icon" width="30" height="28" aria-hidden="true"><use href="#mini-pumpkin"/></svg>
+      <span data-shop-name>[NAZWA]</span>
+    </a>
+    <button class="cart-btn" id="cart-btn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="drawer">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h2.5l2.2 11h10.6l2-8H7"/><circle cx="9.5" cy="19.5" r="1.4"/><circle cx="17" cy="19.5" r="1.4"/></svg>
+      <span>Koszyk</span>
+      <span class="badge" id="cart-count" aria-label="Liczba produktów w koszyku">0</span>
+    </button>
+  </header>
+
+  <main id="top">
+    <!-- SCENY 1 i 2: dynia + zaglądanie do środka (przypięta sekcja sterowana scrollem) -->
+    <section class="intro" id="intro" aria-label="Wstęp: dynia Halloween">
+      <div class="stars" id="stars" aria-hidden="true"></div>
+
+      <p class="hint" id="hint">
+        <span>Scrolluj w dół</span>
+        <svg class="arrow" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9l7 7 7-7"/></svg>
+      </p>
+
+      <div class="aura" id="aura" aria-hidden="true"></div>
+      <canvas class="gl" id="gl" role="img" aria-label="Dynia Halloween"></canvas>
+
+      <div class="fill" id="fill" aria-hidden="true"></div>
+    </section>
+
+    <!-- SCENA 3: sklep -->
+    <section class="shop" id="sklep" aria-labelledby="shop-title">
+      <div class="shop-inner">
+        <div class="hero">
+          <svg class="web web--tl" viewBox="0 0 100 100" aria-hidden="true"><use href="#web"/></svg>
+          <svg class="web web--tr" viewBox="0 0 100 100" aria-hidden="true"><use href="#web"/></svg>
+          <svg class="deco bat bat--1" width="56" height="28" viewBox="0 0 64 32" aria-hidden="true"><use href="#bat"/></svg>
+          <svg class="deco bat bat--2" width="38" height="19" viewBox="0 0 64 32" aria-hidden="true"><use href="#bat"/></svg>
+          <svg class="deco bat bat--3" width="30" height="15" viewBox="0 0 64 32" aria-hidden="true"><use href="#bat"/></svg>
+          <p class="eyebrow">Halloween <svg width="26" height="24" viewBox="0 0 60 56" aria-hidden="true"><use href="#mini-pumpkin"/></svg> Kolekcja</p>
+          <h1 id="shop-title">Straszliwie dobre okazje</h1>
+          <p class="lead">Dekoracje, kostiumy i słodkości na najstraszniejszą noc w roku. Dostawa gratis od <strong data-free-from>150 zł</strong>.</p>
+        </div>
+
+        <div class="toolbar">
+          <h2 class="section-title">Nasze produkty</h2>
+          <div class="filters" id="filters" role="group" aria-label="Filtruj według kategorii"></div>
+        </div>
+        <p class="count" id="count" role="status"></p>
+        <ul class="grid" id="grid"></ul>
+      </div>
+
+      <footer class="footer">
+        <svg class="web web--bl" viewBox="0 0 100 100" aria-hidden="true"><use href="#web"/></svg>
+        <svg class="web web--br" viewBox="0 0 100 100" aria-hidden="true"><use href="#web"/></svg>
+        <p>© <span id="year"></span> <span data-shop-name>[NAZWA]</span> · Wersja demonstracyjna</p>
+      </footer>
+    </section>
+  </main>
+
+  <!-- Koszyk -->
+  <div class="backdrop" id="backdrop"></div>
+  <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" aria-hidden="true">
+    <div class="drawer-head">
+      <h2 id="drawer-title">Twój koszyk</h2>
+      <button class="icon-btn" id="cart-close" type="button" aria-label="Zamknij koszyk">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg>
+      </button>
+    </div>
+    <div class="drawer-body" id="cart-items"></div>
+    <div class="drawer-foot" id="cart-foot">
+      <p class="ship-msg" id="ship-msg"></p>
+      <div class="ship-bar" aria-hidden="true"><span id="ship-fill"></span></div>
+      <dl class="sums">
+        <div><dt>Produkty</dt><dd id="sum-items">0,00 zł</dd></div>
+        <div><dt>Dostawa</dt><dd id="sum-ship">0,00 zł</dd></div>
+        <div class="total"><dt>Razem</dt><dd id="sum-total">0,00 zł</dd></div>
+      </dl>
+      <button class="btn btn--block" id="checkout" type="button">Złóż zamówienie</button>
+      <button class="link-btn" id="clear" type="button">Wyczyść koszyk</button>
+      <p class="checkout-msg" id="checkout-msg" role="status"></p>
+    </div>
+  </aside>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+  <script src="products.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
